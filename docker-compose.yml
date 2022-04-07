@@ -1,0 +1,29 @@
+version: '3.5'
+services:
+  app:
+    container_name: flask
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file: database.conf
+    expose:
+      - 5000
+    depends_on:
+      - database
+
+  database:
+    environment:
+        POSTGRES_DB: postgres
+        POSTGRES_USER: nguyen2442
+        POSTGRES_PASSWORD: nguyen2442
+        POSTGRES_HOST_AUTH_METHOD: trust
+    container_name: postgres
+    image: postgres:latest
+    env_file: database.conf
+    ports:
+      - 5432:5432  
+    volumes:
+      - db_volume:/var/lib/postgresql
+
+volumes:
+  db_volume:
