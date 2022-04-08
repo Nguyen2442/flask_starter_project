@@ -8,6 +8,8 @@ flask = "*"
 python-dotenv = "*"
 flask-sqlalchemy = "*"
 psycopg2-binary = "*"
+flask-migrate = "*"
+flask-jwt-extended = "*"
 
 [dev-packages]
 

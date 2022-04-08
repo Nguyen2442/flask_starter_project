@@ -1,19 +1,23 @@
 from calendar import c
 from distutils.command.config import config
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
 from src.register_blueprint import register_blueprint
-import os 
-from src.config import config
-from src.models.pc_model import db
+from src.config.config import setup_db
+from flask_jwt_extended import JWTManager
+import os
+
 
 
 
 def create_app():
     app = Flask(__name__)
-    app.config['SQLALCHEMY_DATABASE_URI'] = config.DATABASE_CONNECTION_URI
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    db.init_app(app)
+    
+
+    setup_db(app)
+
     register_blueprint(app)
+
+    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY')
+    JWTManager(app)
     
     return app

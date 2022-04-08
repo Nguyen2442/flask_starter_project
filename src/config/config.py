@@ -1,9 +1,19 @@
+from flask_sqlalchemy import SQLAlchemy
+from src.config import database
+from flask_migrate import Migrate
 import os
 
-user = os.environ['DB_USER']
-password = os.environ['DB_PASSWORD']
-host = os.environ['DB_HOST']
-database = os.environ['DB_DB']
-port = os.environ['DB_PORT']
+db = SQLAlchemy()
 
-DATABASE_CONNECTION_URI = f'postgresql+psycopg2://{user}:{password}@{host}:{port}/{database}'
+
+def setup_db(app):
+    app.config['SQLALCHEMY_DATABASE_URI'] = database.DATABASE_CONNECTION_URI
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY')
+    
+    db.app = app
+    db.init_app(app)
+
+    migrate = Migrate(app, db)
+
+    return db
