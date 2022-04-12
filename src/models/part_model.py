@@ -1,7 +1,10 @@
-
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from src.config.config import db
+
+from sqlalchemy import event
+
+
 
 class Part(db.Model):
     __tablename__= 'parts'
@@ -9,16 +12,37 @@ class Part(db.Model):
     name = db.Column(db.String(100))
     type = db.Column(db.String(100))
     price = db.Column(db.Integer)
+    isUsed = db.Column(db.Boolean, default=False)
     
-    def __init__(self, name, type, price):
+    def __init__(self, name, type, price, isUsed):
         self.name = name
         self.type = type
         self.price = price
+        self.isUsed = isUsed
     
     def format(self):
         return {
             'id': self.id,
             'name': self.name,
             'type': self.type,
-            'price': self.price
+            'price': self.price,
+            'isUsed': self.isUsed
         }
+
+
+@event.listens_for(Part.price, 'set')
+def receive_set(target, value, oldvalue, initiator):
+    # print('hello')
+    # print(target.pcs)
+    
+    print("============================")
+    print(value)
+    print(oldvalue)
+    for pc in target.pcs:
+        pc.price += (value - oldvalue)
+        
+
+
+
+
+    

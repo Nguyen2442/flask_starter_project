@@ -1,9 +1,8 @@
-from os import access
 from src.constants.http_status_codes import HTTP_200_OK, HTTP_201_CREATED
 from src.models.user_model import User, db
 from flask import Blueprint, request
 from flask.json import  jsonify
-from flask_jwt_extended import get_jwt_identity , create_access_token, create_refresh_token
+from flask_jwt_extended import jwt_required , get_jwt_identity , create_access_token, create_refresh_token
 from flask.views import MethodView
 
 api_auth = Blueprint('auth_api', __name__)
@@ -29,10 +28,20 @@ class AuthAPI(MethodView):
             'refresh_token' : refresh
             }), HTTP_201_CREATED
 
+    #refresh token is used to get a new access token
+    @jwt_required(refresh=True)
+    def get(self):
+        identity = get_jwt_identity()
+        access = create_access_token(identity={'username': identity['username'], 'id': identity['id'], 'flag': identity['flag']})
+
+        return jsonify({
+            'message': True,
+            'access_token': access
+        }), HTTP_200_OK
 
 
 auth_view = AuthAPI.as_view('auth_api')
-api_auth.add_url_rule('/api/v1/auth', view_func=auth_view, methods=['POST'])
+api_auth.add_url_rule('/api/v1/auth', view_func=auth_view, methods=['POST', 'GET'])
         
 
 

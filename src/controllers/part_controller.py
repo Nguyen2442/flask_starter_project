@@ -1,8 +1,9 @@
 from flask import Blueprint , request
 from flask.json import jsonify
 from flask.views import MethodView
-from src.constants.http_status_codes import HTTP_200_OK,HTTP_201_CREATED , HTTP_401_UNAUTHORIZED
+from src.constants.http_status_codes import HTTP_200_OK,HTTP_201_CREATED , HTTP_401_UNAUTHORIZED, HTTP_404_NOT_FOUND
 from src.models.part_model import Part, db
+from src.models.pc_model import PC, db, components
 
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
@@ -11,6 +12,7 @@ api_part = Blueprint('part_api', __name__)
 
 
 class PartAPI(MethodView):
+    @jwt_required()
     def get(self , id):
         if id is None:
             args = request.args
@@ -23,38 +25,46 @@ class PartAPI(MethodView):
                 return jsonify({
                     'message': True,
                     'part':part_formated
-                })
+                }), HTTP_200_OK
             elif name is not None and type is None:
                 part = Part.query.filter_by(name=name).first()
                 return jsonify({
                     'message': True,
                     'part': part.format()
-                })
+                }), HTTP_200_OK
             elif name is None and type is not None:
                 part = Part.query.filter_by(type=type).first()
                 return jsonify({
                     'message': True,
                     'part': part.format()
-                })
+                }), HTTP_200_OK
             
         else:
             part = Part.query.get(id)
-            return jsonify({
-                'message': True,
-                'part': part.format()
-            })
+            if part is None:
+                return jsonify({
+                    'message': False,
+                    'error': 'Part not found'
+                }), HTTP_404_NOT_FOUND
+            else:
+                return jsonify({
+                    'message': True,
+                    'part': part.format()
+                }), HTTP_200_OK
     
 
     @jwt_required()
     def post(self):
         current_user = get_jwt_identity()
 
+        #only admin can create part
         if current_user['flag'] == True:
             name = request.json['name']
             type = request.json['type']
             price = request.json['price']
+            isUsed = False
 
-            new_part = Part(name=name, type=type, price=price)
+            new_part = Part(name=name, type=type, price=price , isUsed=isUsed)
             db.session.add(new_part)
             db.session.commit()
 
@@ -63,7 +73,8 @@ class PartAPI(MethodView):
                 'part': {
                     'name': new_part.name,
                     'type': new_part.type,
-                    'price': new_part.price
+                    'price': new_part.price,
+                    'isUsed': new_part.isUsed
                 }
             }), HTTP_201_CREATED
 
@@ -77,10 +88,28 @@ class PartAPI(MethodView):
         current_user = get_jwt_identity()
 
         if current_user['flag'] == True:
+            
             part = Part.query.get(id)
             part.name = request.json['name']
             part.type = request.json['type']
             part.price = request.json['price']
+
+            #update new price of part inside any pc builds where this part is used
+            # new_price = part.price 
+            # all_pc = PC.query.all()
+            # new_sum = 0
+            # for pc in all_pc:
+            #     #print(pc.price)
+            #     for comp in pc.components:
+            #         #print(comp.id)
+            #         if comp == id:
+            #             part.price = new_price
+            #             print(part.price)
+            
+            #             new_sum = int(new_sum) + int(part.price)
+            #             pc.price = new_sum
+                
+
             db.session.commit()
 
             return jsonify({
@@ -100,16 +129,21 @@ class PartAPI(MethodView):
     @jwt_required()
     def delete(self, id):
         current_user = get_jwt_identity()
+        part = Part.query.get(id)
 
+        #only admin can delete part
         if current_user['flag'] == True:
-            part = Part.query.get(id)
-            db.session.delete(part)
-            db.session.commit()
+            if part.isUsed == True:
+                return jsonify({
+                    'message': "You can't delete a part that is in use"
+                }), HTTP_401_UNAUTHORIZED
+            else:
+                db.session.delete(part)
+                db.session.commit()
 
-            return jsonify({
-                'message': "Part deleted"
-            })
-
+                return jsonify({
+                    'message': "Part deleted"
+                }), HTTP_200_OK
         else:
             return jsonify({
                 'message': "You are not authorized to delete a part"
