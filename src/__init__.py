@@ -18,6 +18,7 @@ def create_app():
     register_blueprint(app)
 
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY')
+    
     JWTManager(app)
     
     return app

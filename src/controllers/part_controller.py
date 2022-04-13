@@ -3,7 +3,7 @@ from flask.json import jsonify
 from flask.views import MethodView
 from src.constants.http_status_codes import HTTP_200_OK,HTTP_201_CREATED , HTTP_401_UNAUTHORIZED, HTTP_404_NOT_FOUND
 from src.models.part_model import Part, db
-from src.models.pc_model import PC, db, components
+from src.models.pc_model import PC, db
 
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
@@ -58,7 +58,7 @@ class PartAPI(MethodView):
         current_user = get_jwt_identity()
 
         #only admin can create part
-        if current_user['flag'] == True:
+        if current_user['isAdmin'] == True:
             name = request.json['name']
             type = request.json['type']
             price = request.json['price']
@@ -87,7 +87,7 @@ class PartAPI(MethodView):
     def put(self, id):
         current_user = get_jwt_identity()
 
-        if current_user['flag'] == True:
+        if current_user['isAdmin'] == True:
             
             part = Part.query.get(id)
             part.name = request.json['name']
@@ -132,7 +132,7 @@ class PartAPI(MethodView):
         part = Part.query.get(id)
 
         #only admin can delete part
-        if current_user['flag'] == True:
+        if current_user['isAdmin'] == True:
             if part.isUsed == True:
                 return jsonify({
                     'message': "You can't delete a part that is in use"
