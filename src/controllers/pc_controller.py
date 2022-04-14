@@ -177,13 +177,10 @@ class PcAPI(MethodView):
                     new_component = Component(part_id=part_id, quantity=quantity, pc_id=id)
                     db.session.add(new_component)
 
-                db.session.commit()
-
-                price = 0
+                price=0
                 for comp in components:
                     comp_all_values = Part.query.filter_by(id=comp['part_id']).first()
                     price = price + comp_all_values.price * comp['quantity']
-                pc.price = price
 
                 #show name of list component in response
                 components_name = []
@@ -192,6 +189,7 @@ class PcAPI(MethodView):
                     components_name.append(comp_all_values.name)
 
                 db.session.commit()
+                
                 return jsonify({
                     'message': True,
                     'pc': {
