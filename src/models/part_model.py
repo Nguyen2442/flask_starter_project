@@ -6,7 +6,6 @@ from sqlalchemy import event
 import logging
 
 
-
 class Part(db.Model):
     __tablename__= 'parts'
     id = db.Column(db.Integer, primary_key=True)
@@ -29,15 +28,14 @@ class Part(db.Model):
             'price': self.price,
             'isUsed': self.isUsed
         }
-
-
-
-# @event.listens_for(Part.price, 'set')
-# def receive_set(target, value, oldvalue, initiator):
-#     new_value = value - oldvalue
-#     for pc in target.pcs:
-#         pc.price += new_value
-    
+            
+@event.listens_for(Part.price, 'set')
+def receive_set(target, value, oldvalue, initiator):
+    from src.models.pc_model import PC
+    new_value = value - oldvalue
+    all_pc_value = PC.query.all()
+    for pc in all_pc_value:
+        pc.price += new_value
 
 
 

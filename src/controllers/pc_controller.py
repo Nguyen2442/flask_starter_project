@@ -27,39 +27,76 @@ class PcAPI(MethodView):
             name = args.get('name')
 
             if name is None:
-                pc = PC.query.filter_by(userId_created=current_user['id']).all()
-                pc_formated = [pc.format() for pc in pc]
-                return jsonify({
-                    'message': True,
-                    'pc': pc_formated
-                }), HTTP_200_OK
+                if current_user['isAdmin'] == True:
+                    pc = PC.query.all()
+                    pc_formated = [pc.format() for pc in pc]
+                    return jsonify({
+                        'message': True,
+                        'pc': pc_formated
+                    }), HTTP_200_OK
+                else:
+                    pc = PC.query.filter_by(userId_created=current_user['id']).all()
+                    pc_formated = [pc.format() for pc in pc]
+                    return jsonify({
+                        'message': True,
+                        'pc': pc_formated
+                    }), HTTP_200_OK
+
+            else:
+                if current_user['isAdmin'] == True:
+                    pc = PC.query.filter_by(name=name).first()
+                    return jsonify({
+                        'message': True,
+                        'pc': pc.format()
+                    }), HTTP_200_OK
+                else:
+                    pc = PC.query.filter(
+                        PC.userId_created == current_user['id'],
+                        PC.name == name
+                    )
+                    pc_formated = [pc.format() for pc in pc]
+                    return jsonify({
+                        'message': True,
+                        'pc': pc_formated
+                    }), HTTP_200_OK
+        else:
+            if current_user['isAdmin'] == True:
+                pc = PC.query.get(id)
+                #get components of pc by pc_id
+                components = Component.query.filter_by(pc_id=id).all()
+
+                if pc is None:
+                    return jsonify({
+                        'message': False,
+                        'error': 'Pc not found'
+                    }),HTTP_404_NOT_FOUND
+
+                else:
+                    return jsonify({
+                        'message': True,
+                        'pc': pc.format(),
+                        'components': [component.format() for component in components]
+                    }), HTTP_200_OK
             else:
                 pc = PC.query.filter(
                     PC.userId_created == current_user['id'],
-                    PC.name == name
+                    PC.id == id
                 )
-                pc_formated = [pc.format() for pc in pc]
-                return jsonify({
-                    'message': True,
-                    'pc': pc_formated
-                }), HTTP_200_OK
-        else:
-            pc = PC.query.get(id)
-            #get components of pc by pc_id
-            components = Component.query.filter_by(pc_id=id).all()
+                #get components of pc by pc_id
+                components = Component.query.filter_by(pc_id=id).all()
 
-            if pc is None:
-                return jsonify({
-                    'message': False,
-                    'error': 'Pc not found'
-                }),HTTP_404_NOT_FOUND
+                if pc is None:
+                    return jsonify({
+                        'message': False,
+                        'error': 'Pc not found'
+                    }),HTTP_404_NOT_FOUND
 
-            else:
-                return jsonify({
-                    'message': True,
-                    'pc': pc.format(),
-                    'components': [component.format() for component in components]
-                }), HTTP_200_OK
+                else:
+                    return jsonify({
+                        'message': True,
+                        'pc': pc.format(),
+                        'components': [component.format() for component in components]
+                    }), HTTP_200_OK
 
 
 
@@ -95,11 +132,6 @@ class PcAPI(MethodView):
         
         #Add components (part_id, quantity, pc_id) to table components
         for component in components:
-            print('********************************')
-            print(component['part_id'])
-            print(component['quantity'])
-            print('********************************')
-            
             part_id = component['part_id']
             quantity = component['quantity']
             new_component = Component(part_id=part_id, quantity=quantity, pc_id=new_pc.id)
@@ -137,18 +169,15 @@ class PcAPI(MethodView):
                 pc.name = request.json['name']
                 components = request.json['components']
 
-                #edit pc.components
-                component_to_edit = Component.query.filter_by(pc_id=id).all()
-                for component in component_to_edit:
-                    if component.part_id is not None:
-                        component.part_id = 0
-                    else:
-                        component.part_id = [comp['part_id'] for comp in components]
-                    
-                    component.quantity = 0
-                    component.quantity = [comp['quantity'] for comp in components]
-                    component.pc_id = id
-                    db.session.add(component)
+                Component.query.filter_by(pc_id=id).delete()
+
+                for component in components:
+                    part_id = component['part_id']
+                    quantity = component['quantity']
+                    new_component = Component(part_id=part_id, quantity=quantity, pc_id=id)
+                    db.session.add(new_component)
+
+                db.session.commit()
 
                 price = 0
                 for comp in components:

@@ -33,7 +33,6 @@ class AuthAPI(MethodView):
                     'message': 'Logged in successfully',
                     'access_token' : access,
                     'refresh_token' : refresh,
-                    'test':'test'
                 }), HTTP_201_CREATED
             else:
                 return jsonify({
