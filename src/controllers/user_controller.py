@@ -5,8 +5,7 @@ from src.constants.http_status_codes import HTTP_200_OK,HTTP_201_CREATED, HTTP_4
 from src.models.user_model import User, db
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
-from src.helpers.decorators import admin_required
-from werkzeug.security import generate_password_hash
+from src.utils.decorators import admin_required
 
 
 api_user = Blueprint('user_api', __name__)
@@ -20,7 +19,7 @@ class UserAPI(MethodView):
             user_formated = [user.format() for user in user]
             return jsonify({
                 'message': True,
-                'user':user_formated
+                'user':user_formated,
             }), HTTP_200_OK
         else:
             user = User.query.get(id)
@@ -32,7 +31,7 @@ class UserAPI(MethodView):
             else:
                 return jsonify({
                     'message': True,
-                    'user': user.format()
+                    'user': user.format(),
                 }), HTTP_200_OK
 
     def post(self):
@@ -85,7 +84,6 @@ class UserAPI(MethodView):
                     'message': "User updated",
                     'user': {
                         'username': user.username,
-                        'password': user.password
                     }
                 })
             else:
@@ -97,24 +95,30 @@ class UserAPI(MethodView):
     @jwt_required()
     def delete(self, id):
         current_user = get_jwt_identity()
-        if current_user['isAdmin'] == True:
-            user = User.query.get(id)
-            if user is None:
-                return jsonify({
-                    'message': False,
-                    'error': 'User not found'
-                }), HTTP_404_NOT_FOUND
-            else:
-                db.session.delete(user)
-                db.session.commit()
-
-                return jsonify({
-                    'message': "User deleted"
-                }), HTTP_200_OK
-        else:
+        user = User.query.get(id)
+        if user is None:
             return jsonify({
-                'message': "You are not authorized to delete this user"
-            }), HTTP_401_UNAUTHORIZED
+                'message': False,
+                'error': 'User not found'
+            }), HTTP_404_NOT_FOUND
+        else:
+            if current_user['isAdmin'] == True:
+                if user is None:
+                    return jsonify({
+                        'message': False,
+                        'error': 'User not found'
+                    }), HTTP_404_NOT_FOUND
+                else:
+                    db.session.delete(user)
+                    db.session.commit()
+
+                    return jsonify({
+                        'message': "User deleted"
+                    }), HTTP_200_OK
+            else:
+                return jsonify({
+                    'message': "You are not authorized to delete this user"
+                }), HTTP_401_UNAUTHORIZED
         
 
 user_view = UserAPI.as_view('user_api')

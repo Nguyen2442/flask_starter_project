@@ -1,10 +1,6 @@
-import logging
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from src.config.config import db
-from src.models.part_model import Part
-
-from sqlalchemy import event
 
 
 class Component(db.Model):
@@ -36,6 +32,7 @@ class PC(db.Model):
     price = db.Column(db.Integer, default=0)
     userId_created = db.Column(db.Integer, db.ForeignKey('users.id'))
 
+
     components = db.relationship('Component', lazy=True, foreign_keys='Component.pc_id')
     
 
@@ -45,26 +42,13 @@ class PC(db.Model):
         self.userId_created = userId_created
 
 
-        # self.components
-        # for component in components:
-        #     print(component['part_id'])
-
 
     def format(self):
         return {
             'id': self.id,
             'name': self.name,
-            #'components': [component.format() for component in self.components],
             'price': self.price,
             'userId_created': self.userId_created
         }
-
-# @event.listens_for(PC.price, 'set')
-# def receive_set(target, value, oldvalue, initiator):
-#         #if quantity of component increase or decrease, update price of pc
-#     new_value = value - oldvalue
-#     for component in target.components:
-#         component.part.price += new_value
-#         print("component.part.price: ")
 
 

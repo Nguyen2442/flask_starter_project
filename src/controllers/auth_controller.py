@@ -55,7 +55,7 @@ class AuthAPI(MethodView):
 class HealthCheckAPI(MethodView):
     def get(self):
         return jsonify({
-            'message': 'Healthy'
+            'message': 'Server is running!'
         }), HTTP_200_OK
 
 auth_view = AuthAPI.as_view('auth_api')

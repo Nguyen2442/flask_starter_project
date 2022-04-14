@@ -3,7 +3,6 @@ from datetime import datetime
 from src.config.config import db
 
 from sqlalchemy import event
-import logging
 
 
 class Part(db.Model):
@@ -26,16 +25,22 @@ class Part(db.Model):
             'name': self.name,
             'type': self.type,
             'price': self.price,
-            'isUsed': self.isUsed
+            'isUsed': self.isUsed,
         }
-            
+
+#update the price of pc builds while price of part changed
 @event.listens_for(Part.price, 'set')
 def receive_set(target, value, oldvalue, initiator):
     from src.models.pc_model import PC
-    new_value = value - oldvalue
-    all_pc_value = PC.query.all()
-    for pc in all_pc_value:
-        pc.price += new_value
+    
+    if type(value) != int or type(oldvalue) != int: #fix: value or oldvalue is symbol
+        value = 0
+        oldvalue = 0
+    else:
+        new_value = value - oldvalue
+        all_pc_value = PC.query.all()
+        for pc in all_pc_value:
+            pc.price += new_value
 
 
 

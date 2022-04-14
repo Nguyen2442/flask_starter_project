@@ -17,10 +17,6 @@ class PcAPI(MethodView):
     @jwt_required()
     def get(self, id):
         current_user = get_jwt_identity()
-
-        #show name of list components in pc by pc_id
-        # for component in Component.query.filter_by(pc_id=id).all():
-        #     print(component.name)
         
         if id is None:
             args = request.args
@@ -34,12 +30,12 @@ class PcAPI(MethodView):
                         'message': True,
                         'pc': pc_formated
                     }), HTTP_200_OK
-                else:
+                else:                    
                     pc = PC.query.filter_by(userId_created=current_user['id']).all()
                     pc_formated = [pc.format() for pc in pc]
                     return jsonify({
                         'message': True,
-                        'pc': pc_formated
+                        'pc': pc_formated,
                     }), HTTP_200_OK
 
             else:
@@ -47,7 +43,7 @@ class PcAPI(MethodView):
                     pc = PC.query.filter_by(name=name).first()
                     return jsonify({
                         'message': True,
-                        'pc': pc.format()
+                        'pc': pc.format(), 
                     }), HTTP_200_OK
                 else:
                     pc = PC.query.filter(
@@ -57,13 +53,16 @@ class PcAPI(MethodView):
                     pc_formated = [pc.format() for pc in pc]
                     return jsonify({
                         'message': True,
-                        'pc': pc_formated
+                        'pc': pc_formated,
                     }), HTTP_200_OK
         else:
             if current_user['isAdmin'] == True:
                 pc = PC.query.get(id)
+
                 #get components of pc by pc_id
                 components = Component.query.filter_by(pc_id=id).all()
+                
+
 
                 if pc is None:
                     return jsonify({
@@ -75,7 +74,7 @@ class PcAPI(MethodView):
                     return jsonify({
                         'message': True,
                         'pc': pc.format(),
-                        'components': [component.format() for component in components]
+                        'components': [component.format() for component in components],
                     }), HTTP_200_OK
             else:
                 pc = PC.query.filter(
@@ -83,8 +82,7 @@ class PcAPI(MethodView):
                     PC.id == id
                 )
                 #get components of pc by pc_id
-                components = Component.query.filter_by(pc_id=id).all()
-
+                components = Component.query.filter_by(pc_id=id).all()        
                 if pc is None:
                     return jsonify({
                         'message': False,
@@ -95,7 +93,7 @@ class PcAPI(MethodView):
                     return jsonify({
                         'message': True,
                         'pc': pc.format(),
-                        'components': [component.format() for component in components]
+                        'components': [component.format() for component in components],
                     }), HTTP_200_OK
 
 
@@ -145,7 +143,7 @@ class PcAPI(MethodView):
                 'name': new_pc.name,
                 'price': new_pc.price,
                 'components': components_name,
-                'userId_created': userId_created
+                'userId_created': userId_created,
             }
         }), HTTP_201_CREATED
 
@@ -189,79 +187,37 @@ class PcAPI(MethodView):
                     components_name.append(comp_all_values.name)
 
                 db.session.commit()
-                
+
                 return jsonify({
                     'message': True,
                     'pc': {
                         'name': pc.name,
                         'price': pc.price,
                         'components': components_name,
-                        'userId_created': pc.userId_created
+                        'userId_created': pc.userId_created,
                     }
                 })
 
-    # @jwt_required()
-    # def put(self, id):
-    #     current_user = get_jwt_identity()
-    #     pc = PC.query.get(id)
-    #     components = Component.query.filter_by(pc_id=id).all()
-    #     for component in components:
-    #         print("component.part_id before", component.part_id)
-            
-    #         db.session.delete(component.part_id)
-    #         print("component.part_id after", component.part_id)
-    #         component.quantity = None
-
-    #     print(components)
-
-    #     if pc is None:
-    #         return jsonify({
-    #             'message': False,
-    #             'error': 'Pc not found'
-    #         }), HTTP_404_NOT_FOUND
-    #     else:
-    #         if pc.userId_created == current_user['id'] or current_user['isAdmin']==True:
-    #             pc.name = request.json['name']
-    #             #update components 
-                
-    #             components = request.json['components']
-    #             for component in components:
-    #                 comp = Component.query.filter_by(pc_id=id, part_id=component['part_id']).first()
-    #                 comp.quantity = component['quantity']
-                
-                
-
-    #             db.session.commit()
-    #         else:
-    #             return jsonify({
-    #                 'message': "You are not authorized to update this pc"
-    #             }), HTTP_401_UNAUTHORIZED
-
-    #     return jsonify({
-    #         'message': "Pc updated",
-    #         # 'pc': {
-    #         #     'name': pc.name,
-    #         #     'price': pc.price,
-    #         #     # 'components': [],
-    #         #     'userId_created': pc.userId_created
-    #         # }
-    #     }), HTTP_200_OK
 
     @jwt_required()
     def delete(self, id):
         current_user = get_jwt_identity()
-        if id is None:
+        pc = PC.query.get(id)
+        if pc is None:
             return jsonify({
                 'message': False,
                 'error': 'Pc not found'
             }), HTTP_404_NOT_FOUND
         else:
-            pc = PC.query.get(id)
             if pc.userId_created == current_user['id'] or current_user['isAdmin']==True:
+                components_have_pc_id = Component.query.filter_by(pc_id=id).all()
+                for comp in components_have_pc_id:
+                    db.session.delete(comp)
                 db.session.delete(pc)
                 db.session.commit()
 
             return jsonify({
+                'success': True,
                 'message': "Pc deleted"
             }), HTTP_200_OK
 
