@@ -31,6 +31,7 @@ class Part(db.Model):
         }
 
 
+
 # @event.listens_for(Part.price, 'set')
 # def receive_set(target, value, oldvalue, initiator):
 #     new_value = value - oldvalue

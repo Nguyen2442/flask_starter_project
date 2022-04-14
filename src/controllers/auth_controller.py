@@ -32,7 +32,8 @@ class AuthAPI(MethodView):
                 return jsonify({
                     'message': 'Logged in successfully',
                     'access_token' : access,
-                'refresh_token' : refresh
+                    'refresh_token' : refresh,
+                    'test':'test'
                 }), HTTP_201_CREATED
             else:
                 return jsonify({
@@ -52,9 +53,16 @@ class AuthAPI(MethodView):
             'access_token': access
         }), HTTP_200_OK
 
+class HealthCheckAPI(MethodView):
+    def get(self):
+        return jsonify({
+            'message': 'Healthy'
+        }), HTTP_200_OK
 
 auth_view = AuthAPI.as_view('auth_api')
+health_check_view = HealthCheckAPI.as_view('health_check_api')
 api_auth.add_url_rule('/api/v1/auth', view_func=auth_view, methods=['POST', 'GET'])
+api_auth.add_url_rule('/api/v1/health_check', view_func=health_check_view, methods=['GET'])
         
 
 

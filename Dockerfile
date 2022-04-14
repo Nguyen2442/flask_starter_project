@@ -6,7 +6,7 @@ WORKDIR /app
 COPY . .
 
 RUN pip install pipenv
-RUN pipenv install
+RUN pipenv install --system --deploy
 
 CMD ["flask", "run"]
 
