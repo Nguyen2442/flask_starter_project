@@ -11,6 +11,10 @@ psycopg2-binary = "*"
 flask-migrate = "*"
 flask-jwt-extended = "*"
 werkzeug = "*"
+cerberus = "*"
+celery = "*"
+redis = "*"
+sphinx = "*"
 
 [dev-packages]
 
